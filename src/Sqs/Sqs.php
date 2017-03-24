@@ -10,6 +10,7 @@ namespace ZendService\Amazon\Sqs;
 use SimpleXMLElement;
 use Zend\Crypt\Hmac;
 use ZendService\Amazon;
+use Zend\Http\Client as HttpClient;
 
 /**
  * Class for connecting to the Amazon Simple Queue Service (SQS)
@@ -34,6 +35,25 @@ class Sqs extends Amazon\AbstractAmazon
      */
     protected $_sqsEndpoint = 'queue.amazonaws.com';
 
+    protected $sqsEndpoints = [
+        'us-east-1'      => 'sqs.us-east-1.amazonaws.com',
+        'us-east-2'      => 'sqs.us-east-2.amazonaws.com',
+        'us-west-1'      => 'sqs.us-west-1.amazonaws.com',
+        'us-west-2'      => 'sqs.us-west-2.amazonaws.com',
+        'ca-central-1'   => 'sqs.ca-central-1.amazonaws.com',
+        'ap-south-1'     => 'sqs.ap-south-1.amazonaws.com',
+        'ap-northeast-2' => 'sqs.ap-northeast-2.amazonaws.com',
+        'ap-southeast-1' => 'sqs.ap-southeast-1.amazonaws.com',
+        'ap-southeast-2' => 'sqs.ap-southeast-2.amazonaws.com',
+        'ap-northeast-1' => 'sqs.ap-northeast-1.amazonaws.com',
+        'eu-central-1'   => 'sqs.eu-central-1.amazonaws.com',
+        'eu-west-1'      => 'sqs.eu-west-1.amazonaws.com',
+        'eu-west-2'      => 'sqs.eu-west-2.amazonaws.com',
+        'sa-east-1'      => 'sqs.sa-east-1.amazonaws.com',
+    ];
+
+    private $region = 'us-east-1';
+
     /**
      * The API version to use
      */
@@ -56,11 +76,23 @@ class Sqs extends Amazon\AbstractAmazon
      *
      * @param string $accessKey
      * @param string $secretKey
+     * @param HttpClient $client
      * @param string $region
      */
-    public function __construct($accessKey = null, $secretKey = null, $region = null)
-    {
-        parent::__construct($accessKey, $secretKey, $region);
+    public function __construct(
+        $accessKey = null,
+        $secretKey = null,
+        HttpClient $httpClient = null,
+        $region = 'us-east-1'
+    ) {
+        if (! isset($this->sqsEndpoints[$region])) {
+            throw new Exception\InvalidArgumentException(
+                sprintf('Invalid region "%s"', $region)
+            );
+        }
+        $this->region = $region;
+        $this->_sqsEndpoint = $this->sqsEndpoints[$region];
+        parent::__construct($accessKey, $secretKey, $httpClient);
     }
 
     /**
@@ -126,6 +158,16 @@ class Sqs extends Amazon\AbstractAmazon
         }
 
         return true;
+    }
+
+    /**
+     * Get region this queue is using
+     *
+     * @return string
+     */
+    public function getRegion()
+    {
+        return $this->region;
     }
 
     /**
